@@ -18,6 +18,11 @@ CourseLoader.register({
     // Lochposition (oben mitte)
     hole: { x: 0.5, y: 0.15 },
     
+    // Steigung auf dem linken Weg (Gegenwind / Bergauf)
+    slopes: [
+        { x: 0.1, y: 0.3, w: 0.2, h: 0.4, dx: 0, dy: 0.05 }
+    ],
+
     // Spielfeld
     walls: [
         { x1: 0.1, y1: 0.05, x2: 0.9, y2: 0.05 },   // Oben

@@ -18,6 +18,17 @@ CourseLoader.register({
     // Loch auf rechter Insel
     hole: { x: 0.8, y: 0.5 },
     
+    // Steigungen auf den Brücken (Wölbung)
+    slopes: [
+        // Brücke 1: Wölbung (erst hoch/links, dann runter/rechts)
+        { x: 0.3, y: 0.45, w: 0.07, h: 0.1, dx: -0.04, dy: 0 },
+        { x: 0.38, y: 0.45, w: 0.07, h: 0.1, dx: 0.04, dy: 0 },
+        
+        // Brücke 2: Wölbung
+        { x: 0.55, y: 0.45, w: 0.07, h: 0.1, dx: -0.04, dy: 0 },
+        { x: 0.63, y: 0.45, w: 0.07, h: 0.1, dx: 0.04, dy: 0 }
+    ],
+
     // Wände definieren die Inseln und Brücken
     walls: [
         // Insel 1 (Links)

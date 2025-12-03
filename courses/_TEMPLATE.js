@@ -66,6 +66,20 @@ CourseLoader.register({
     ],
     
     // ============================================
+    // Steigungen (optional)
+    // ============================================
+    
+    /**
+     * Steigungen beschleunigen den Ball in eine Richtung
+     * Format: { x, y, w, h, dx, dy }
+     * dx, dy: Richtung und Stärke (z.B. dx: 0.05 für leichten Schub nach rechts)
+     */
+    slopes: [
+        // Beispiel: Steigung nach rechts oben
+        // { x: 0.2, y: 0.2, w: 0.6, h: 0.6, dx: 0.05, dy: -0.05 }
+    ],
+
+    // ============================================
     // Hindernisse (optional)
     // ============================================
     

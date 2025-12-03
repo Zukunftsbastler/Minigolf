@@ -31,6 +31,17 @@ const Physics = {
         course.obstacles.forEach(obs => {
             this.checkObstacleCollision(ball, obs, canvasWidth, canvasHeight);
         });
+
+        let isOnSlope = false;
+
+        // Steigungen anwenden (wenn vorhanden)
+        if (course.slopes) {
+            course.slopes.forEach(slope => {
+                if (this.applySlope(ball, slope, canvasWidth, canvasHeight)) {
+                    isOnSlope = true;
+                }
+            });
+        }
         
         // Prüfen ob Ball eingelocht
         const holeX = course.hole.x * canvasWidth;
@@ -50,8 +61,8 @@ const Physics = {
             return 'holed';
         }
         
-        // Ball stoppt wenn langsam genug
-        if (Math.abs(ball.vx) < MIN_VELOCITY && Math.abs(ball.vy) < MIN_VELOCITY) {
+        // Ball stoppt wenn langsam genug UND nicht auf einer Steigung
+        if (!isOnSlope && Math.abs(ball.vx) < MIN_VELOCITY && Math.abs(ball.vy) < MIN_VELOCITY) {
             ball.vx = 0;
             ball.vy = 0;
             return 'stopped';
@@ -60,6 +71,33 @@ const Physics = {
         return null;
     },
     
+    /**
+     * Wendet Steigungskräfte auf den Ball an
+     */
+    applySlope(ball, slope, canvasWidth, canvasHeight) {
+        // Koordinaten umrechnen
+        const sx = slope.x * canvasWidth;
+        const sy = slope.y * canvasHeight;
+        const sw = slope.w * canvasWidth;
+        const sh = slope.h * canvasHeight;
+        
+        // Prüfen ob Ball im Bereich ist
+        if (ball.x >= sx && ball.x <= sx + sw &&
+            ball.y >= sy && ball.y <= sy + sh) {
+            
+            // Kraft anwenden
+            // Wir nehmen an, dass dx/dy bereits die Stärke beinhalten
+            // Optionaler Multiplikator für globale Abstimmung
+            const forceMultiplier = 3.5; 
+            
+            ball.vx += slope.dx * forceMultiplier;
+            ball.vy += slope.dy * forceMultiplier;
+            
+            return true;
+        }
+        return false;
+    },
+
     /**
      * Prüft und behandelt Kollision mit einer Wand
      */

@@ -43,6 +43,9 @@ const Renderer = {
         
         // Spielfeld-Bereich (Gras)
         this.drawPlayArea(course, currentHoleIndex);
+
+        // Steigungen
+        this.drawSlopes(course);
         
         // Dekorationen
         this.drawDecorations(course);
@@ -431,5 +434,55 @@ const Renderer = {
             this.ctx.fill();
         });
         this.ctx.globalAlpha = 1;
+    },
+
+    /**
+     * Zeichnet Steigungen (Pfeile)
+     */
+    drawSlopes(course) {
+        if (!course.slopes) return;
+
+        course.slopes.forEach(slope => {
+            const x = slope.x * this.canvasWidth;
+            const y = slope.y * this.canvasHeight;
+            const w = slope.w * this.canvasWidth;
+            const h = slope.h * this.canvasHeight;
+
+            // Transparenter Hintergrund für den Bereich
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+            this.ctx.fillRect(x, y, w, h);
+            
+            // Pfeile zeichnen
+            const angle = Math.atan2(slope.dy, slope.dx);
+            const size = 15;
+            const step = 30; // Abstand zwischen Pfeilen
+            
+            this.ctx.save();
+            this.ctx.beginPath();
+            this.ctx.rect(x, y, w, h);
+            this.ctx.clip(); // Nur innerhalb des Bereichs zeichnen
+
+            this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+            this.ctx.lineWidth = 2;
+
+            for(let px = x + step/2; px < x + w; px += step) {
+                for(let py = y + step/2; py < y + h; py += step) {
+                    this.ctx.save();
+                    this.ctx.translate(px, py);
+                    this.ctx.rotate(angle);
+                    
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(-size/2, 0);
+                    this.ctx.lineTo(size/2, 0);
+                    this.ctx.lineTo(size/6, -size/3);
+                    this.ctx.moveTo(size/2, 0);
+                    this.ctx.lineTo(size/6, size/3);
+                    this.ctx.stroke();
+                    
+                    this.ctx.restore();
+                }
+            }
+            this.ctx.restore();
+        });
     }
 };

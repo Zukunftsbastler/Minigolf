@@ -27,6 +27,11 @@ CourseLoader.register({
         { x1: 0.8, y1: 0.08, x2: 0.8, y2: 0.92 }    // Rechts
     ],
     
+    // Steigung, die dem Spieler hilft (Rückenwind)
+    slopes: [
+        { x: 0.25, y: 0.4, w: 0.5, h: 0.2, dx: 0, dy: -0.04 }
+    ],
+
     // Keine Hindernisse auf dieser einfachen Bahn
     obstacles: [],
     
