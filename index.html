@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🏌️ Mini Golf Deluxe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================
+           CSS: Grundlegende Styles und Variablen
+           ============================================ */
+        :root {
+            /* Farbpalette - harmonisch und modern */
+            --bg-gradient-start: #0f172a;
+            --bg-gradient-end: #1e3a5f;
+            --grass-light: #4ade80;
+            --grass-dark: #22c55e;
+            --grass-border: #16a34a;
+            --sand: #fcd34d;
+            --water: #38bdf8;
+            --ball-color: #ffffff;
+            --ball-shadow: rgba(0, 0, 0, 0.3);
+            --hole-color: #1f2937;
+            --hole-inner: #0f172a;
+            --flag-pole: #78716c;
+            --flag-color: #ef4444;
+            --ui-bg: rgba(255, 255, 255, 0.95);
+            --ui-text: #1f2937;
+            --ui-accent: #f97316;
+            --ui-accent-hover: #ea580c;
+            --ui-success: #22c55e;
+            --ui-muted: #64748b;
+            --obstacle-color: #78716c;
+            --obstacle-light: #a8a29e;
+            --aim-line: rgba(255, 255, 255, 0.8);
+            --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-large: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --transition-fast: 150ms ease;
+            --transition-normal: 250ms ease;
+            --transition-slow: 400ms ease;
+            --border-radius: 12px;
+            --border-radius-large: 20px;
+        }
+
+        /* Reset und Basis */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            color: var(--ui-text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        /* ============================================
+           UI: Header mit Spielinfo
+           ============================================ */
+        .game-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 1rem;
+            padding: 0.75rem 1.25rem;
+            background: var(--ui-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .game-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--grass-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .game-stats {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--ui-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--ui-text);
+            line-height: 1;
+        }
+
+        /* ============================================
+           Canvas Container und Spielfeld
+           ============================================ */
+        .game-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            aspect-ratio: 4 / 5;
+            max-height: 70vh;
+        }
+
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            border-radius: var(--border-radius-large);
+            box-shadow: var(--shadow-large);
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        /* ============================================
+           UI: Footer mit Buttons
+           ============================================ */
+        .game-footer {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            width: 100%;
+            max-width: 600px;
+            justify-content: center;
+        }
+
+        /* Button Styles - konsistent und modern */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 700;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:focus {
+            outline: 3px solid rgba(249, 115, 22, 0.5);
+            outline-offset: 2px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--ui-accent) 0%, var(--ui-accent-hover) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--ui-accent-hover) 0%, #c2410c 100%);
+        }
+
+        .btn-secondary {
+            background: var(--ui-bg);
+            color: var(--ui-text);
+        }
+
+        .btn-secondary:hover {
+            background: #f1f5f9;
+        }
+
+        /* ============================================
+           Overlays - Welcome, Hole Complete, Game End
+           ============================================ */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-normal), visibility var(--transition-normal);
+        }
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .overlay-content {
+            background: var(--ui-bg);
+            padding: 2rem;
+            border-radius: var(--border-radius-large);
+            box-shadow: var(--shadow-large);
+            text-align: center;
+            max-width: 90%;
+            width: 360px;
+            transform: scale(0.9);
+            transition: transform var(--transition-normal);
+        }
+
+        .overlay.active .overlay-content {
+            transform: scale(1);
+        }
+
+        .overlay-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .overlay-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--ui-text);
+            margin-bottom: 0.5rem;
+        }
+
+        .overlay-subtitle {
+            font-size: 1rem;
+            color: var(--ui-muted);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        /* Anleitung im Welcome-Overlay */
+        .instructions {
+            text-align: left;
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1.5rem;
+        }
+
+        .instruction-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .instruction-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .instruction-number {
+            flex-shrink: 0;
+            width: 1.5rem;
+            height: 1.5rem;
+            background: var(--grass-dark);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .instruction-text {
+            font-size: 0.9rem;
+            color: var(--ui-text);
+            line-height: 1.4;
+        }
+
+        /* Score-Übersicht */
+        .score-table {
+            width: 100%;
+            margin-bottom: 1.5rem;
+        }
+
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .score-row:last-child {
+            border-bottom: none;
+            font-weight: 700;
+            color: var(--grass-dark);
+        }
+
+        .score-label {
+            color: var(--ui-muted);
+        }
+
+        .score-value {
+            font-weight: 700;
+        }
+
+        /* Par-Anzeige */
+        .par-display {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+
+        .par-under {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .par-even {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .par-over {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        /* ============================================
+           Responsive Anpassungen
+           ============================================ */
+        @media (max-width: 480px) {
+            body {
+                padding: 0.5rem;
+            }
+
+            .game-header {
+                padding: 0.5rem 1rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .game-title {
+                font-size: 1rem;
+            }
+
+            .game-stats {
+                gap: 1rem;
+            }
+
+            .stat-value {
+                font-size: 1.25rem;
+            }
+
+            .game-container {
+                max-height: 65vh;
+            }
+
+            .game-footer {
+                margin-top: 0.75rem;
+            }
+
+            .btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.85rem;
+            }
+
+            .overlay-content {
+                padding: 1.5rem;
+            }
+
+            .overlay-title {
+                font-size: 1.25rem;
+            }
+        }
+
+        /* ============================================
+           Animationen
+           ============================================ */
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(0) rotate(0deg); }
+            50% { transform: scale(1.2) rotate(180deg); }
+            100% { transform: scale(1) rotate(360deg); }
+        }
+
+        .celebrate {
+            animation: celebrate 0.6s ease-out;
+        }
+
+        /* Barrierefreiheit: Fokus-Styles */
+        :focus-visible {
+            outline: 3px solid var(--ui-accent);
+            outline-offset: 2px;
+        }
+
+        /* Reduzierte Bewegung für Barrierefreiheit */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ============================================
+         HTML: Spiel-Header mit Stats
+         ============================================ -->
+    <header class="game-header" role="banner">
+        <h1 class="game-title">
+            <span aria-hidden="true">⛳</span>
+            Mini Golf
+        </h1>
+        <div class="game-stats">
+            <div class="stat">
+                <span class="stat-label">Bahn</span>
+                <span class="stat-value" id="holeNumber" aria-live="polite">1/3</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Schläge</span>
+                <span class="stat-value" id="strokeCount" aria-live="polite">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Spielfeld Canvas -->
+    <main class="game-container" role="main">
+        <canvas id="gameCanvas" aria-label="Minigolf-Spielfeld"></canvas>
+    </main>
+
+    <!-- Footer mit Buttons -->
+    <footer class="game-footer" role="contentinfo">
+        <button class="btn btn-secondary" id="resetBtn" aria-label="Ball zurücksetzen">
+            <span aria-hidden="true">↺</span> Reset
+        </button>
+        <button class="btn btn-primary" id="newGameBtn" aria-label="Neues Spiel starten">
+            <span aria-hidden="true">🎮</span> Neues Spiel
+        </button>
+    </footer>
+
+    <!-- ============================================
+         Overlay: Willkommen / Anleitung
+         ============================================ -->
+    <div class="overlay active" id="welcomeOverlay" role="dialog" aria-labelledby="welcomeTitle" aria-modal="true">
+        <div class="overlay-content">
+            <div class="overlay-icon" aria-hidden="true">🏌️</div>
+            <h2 class="overlay-title" id="welcomeTitle">Willkommen!</h2>
+            <p class="overlay-subtitle">Versenke den Ball mit möglichst wenigen Schlägen.</p>
+            
+            <div class="instructions" role="list" aria-label="Spielanleitung">
+                <div class="instruction-item" role="listitem">
+                    <span class="instruction-number" aria-hidden="true">1</span>
+                    <span class="instruction-text"><strong>Klicke/Tippe</strong> auf den Ball und halte gedrückt.</span>
+                </div>
+                <div class="instruction-item" role="listitem">
+                    <span class="instruction-number" aria-hidden="true">2</span>
+                    <span class="instruction-text"><strong>Ziehe</strong> in die Gegenrichtung – die Linie zeigt Richtung und Stärke.</span>
+                </div>
+                <div class="instruction-item" role="listitem">
+                    <span class="instruction-number" aria-hidden="true">3</span>
+                    <span class="instruction-text"><strong>Loslassen</strong> – der Ball fliegt los!</span>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" id="startBtn" style="width: 100%;">
+                <span aria-hidden="true">▶</span> Spiel starten
+            </button>
+        </div>
+    </div>
+
+    <!-- ============================================
+         Overlay: Bahn geschafft
+         ============================================ -->
+    <div class="overlay" id="holeCompleteOverlay" role="dialog" aria-labelledby="holeCompleteTitle" aria-modal="true">
+        <div class="overlay-content">
+            <div class="overlay-icon celebrate" aria-hidden="true">🎉</div>
+            <h2 class="overlay-title" id="holeCompleteTitle">Eingelocht!</h2>
+            <p class="overlay-subtitle" id="holeCompleteText">Du hast es in X Schlägen geschafft!</p>
+            <div id="parDisplay"></div>
+            <button class="btn btn-primary" id="nextHoleBtn" style="width: 100%; margin-top: 1rem;">
+                <span aria-hidden="true">→</span> Nächste Bahn
+            </button>
+        </div>
+    </div>
+
+    <!-- ============================================
+         Overlay: Spiel beendet
+         ============================================ -->
+    <div class="overlay" id="gameEndOverlay" role="dialog" aria-labelledby="gameEndTitle" aria-modal="true">
+        <div class="overlay-content">
+            <div class="overlay-icon" aria-hidden="true">🏆</div>
+            <h2 class="overlay-title" id="gameEndTitle">Geschafft!</h2>
+            <p class="overlay-subtitle">Hier ist deine Übersicht:</p>
+            
+            <div class="score-table" id="scoreTable" role="table" aria-label="Punkteübersicht">
+                <!-- Wird dynamisch gefüllt -->
+            </div>
+            
+            <button class="btn btn-primary" id="playAgainBtn" style="width: 100%;">
+                <span aria-hidden="true">🔄</span> Nochmal spielen
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /* ============================================
+           JavaScript: Minigolf-Spiellogik
+           ============================================ */
+
+        // ============================================
+        // Konstanten und Konfiguration
+        // ============================================
+        const FRICTION = 0.985;           // Reibung – je näher an 1, desto länger rollt der Ball
+        const MIN_VELOCITY = 0.15;        // Mindestgeschwindigkeit, unter der der Ball stoppt
+        const MAX_POWER = 18;             // Maximale Schlagkraft
+        const POWER_MULTIPLIER = 0.12;    // Umrechnung Mausziehung -> Kraft
+        const BALL_RADIUS = 12;           // Ballgröße
+        const HOLE_RADIUS = 16;           // Lochgröße
+        const HOLE_CAPTURE_SPEED = 4;     // Max. Geschwindigkeit für Loch-Treffer
+
+        // ============================================
+        // Bahndefinitionen - 3 Bahnen mit steigender Schwierigkeit
+        // Alle Bahnen wurden sorgfältig geprüft:
+        // - Ball-Startposition liegt innerhalb der Spielfläche
+        // - Loch liegt innerhalb der Spielfläche
+        // - Es gibt einen freien Weg vom Start zum Loch
+        // ============================================
+        const COURSES = [
+            {
+                // Bahn 1: Einfache gerade Strecke
+                // Layout: Einfaches Rechteck, Ball unten, Loch oben
+                // Weg: Direkter gerader Schuss möglich
+                name: "Der Anfang",
+                par: 2,
+                ballStart: { x: 0.5, y: 0.85 },  // Mitte unten
+                hole: { x: 0.5, y: 0.15 },       // Mitte oben
+                walls: [
+                    // Rechteckige Begrenzung
+                    { x1: 0.2, y1: 0.08, x2: 0.8, y2: 0.08 },   // Oben
+                    { x1: 0.2, y1: 0.92, x2: 0.8, y2: 0.92 },   // Unten
+                    { x1: 0.2, y1: 0.08, x2: 0.2, y2: 0.92 },   // Links
+                    { x1: 0.8, y1: 0.08, x2: 0.8, y2: 0.92 }    // Rechts
+                ],
+                obstacles: [],
+                decorations: [
+                    { type: 'tree', x: 0.1, y: 0.3 },
+                    { type: 'tree', x: 0.9, y: 0.6 },
+                    { type: 'flower', x: 0.1, y: 0.7 },
+                    { type: 'flower', x: 0.9, y: 0.25 }
+                ],
+                bgColor: '#22c55e',
+                accentColor: '#16a34a'
+            },
+            {
+                // Bahn 2: Dogleg / Winkel-Bahn
+                // Layout: L-förmige Bahn - Ball startet unten links, Loch oben rechts
+                // Die Bahn hat eine Ecke in der Mitte
+                // Weg: Ball muss um die Ecke gespielt werden (Bankenschuss oder 2 Schläge)
+                name: "Die Kurve",
+                par: 3,
+                ballStart: { x: 0.25, y: 0.8 },  // Unten links im vertikalen Teil
+                hole: { x: 0.75, y: 0.2 },       // Oben rechts im horizontalen Teil
+                walls: [
+                    // Vertikaler Teil (unten) - linke Seite der L-Form
+                    { x1: 0.15, y1: 0.45, x2: 0.15, y2: 0.9 },  // Linke Außenwand
+                    { x1: 0.15, y1: 0.9, x2: 0.35, y2: 0.9 },   // Untere Wand
+                    { x1: 0.35, y1: 0.45, x2: 0.35, y2: 0.9 },  // Rechte Innenwand (bis zur Ecke)
+                    
+                    // Horizontaler Teil (oben) - obere Seite der L-Form
+                    { x1: 0.15, y1: 0.1, x2: 0.85, y2: 0.1 },   // Obere Außenwand
+                    { x1: 0.85, y1: 0.1, x2: 0.85, y2: 0.35 },  // Rechte Außenwand
+                    { x1: 0.35, y1: 0.35, x2: 0.85, y2: 0.35 }, // Untere Innenwand
+                    
+                    // Verbindung / Ecke
+                    { x1: 0.15, y1: 0.1, x2: 0.15, y2: 0.45 }   // Linke Wand oben (verbindet beide Teile)
+                ],
+                obstacles: [],
+                decorations: [
+                    { type: 'rock', x: 0.08, y: 0.7 },
+                    { type: 'tree', x: 0.92, y: 0.5 },
+                    { type: 'flower', x: 0.5, y: 0.05 }
+                ],
+                bgColor: '#3b82f6',
+                accentColor: '#2563eb'
+            },
+            {
+                // Bahn 3: Hindernisparcours
+                // Layout: Breites Rechteck mit Hindernissen in der Mitte
+                // Weg: Ball muss zwischen den Hindernissen hindurch
+                name: "Das Finale",
+                par: 4,
+                ballStart: { x: 0.5, y: 0.85 },  // Mitte unten
+                hole: { x: 0.5, y: 0.12 },       // Mitte oben
+                walls: [
+                    // Rechteckige Begrenzung
+                    { x1: 0.1, y1: 0.05, x2: 0.9, y2: 0.05 },   // Oben
+                    { x1: 0.1, y1: 0.92, x2: 0.9, y2: 0.92 },   // Unten
+                    { x1: 0.1, y1: 0.05, x2: 0.1, y2: 0.92 },   // Links
+                    { x1: 0.9, y1: 0.05, x2: 0.9, y2: 0.92 }    // Rechts
+                ],
+                obstacles: [
+                    // Erste Hindernis-Reihe (näher am Loch) - Lücke in der Mitte
+                    { x: 0.15, y: 0.28, w: 0.25, h: 0.06 },  // Links
+                    { x: 0.60, y: 0.28, w: 0.25, h: 0.06 },  // Rechts
+                    
+                    // Mittleres Hindernis - mittig, zwingt zu Umwegen
+                    { x: 0.42, y: 0.48, w: 0.16, h: 0.08 },
+                    
+                    // Untere Hindernis-Reihe - Lücken links und rechts
+                    { x: 0.30, y: 0.68, w: 0.40, h: 0.05 }
+                ],
+                decorations: [
+                    { type: 'rock', x: 0.05, y: 0.2 },
+                    { type: 'rock', x: 0.95, y: 0.8 },
+                    { type: 'flower', x: 0.05, y: 0.5 },
+                    { type: 'flower', x: 0.95, y: 0.4 }
+                ],
+                bgColor: '#8b5cf6',
+                accentColor: '#7c3aed'
+            }
+        ];
+
+        // ============================================
+        // Spielzustand
+        // ============================================
+        let canvas, ctx;
+        let canvasWidth, canvasHeight;
+        let ball = { x: 0, y: 0, vx: 0, vy: 0 };
+        let currentHole = 0;
+        let strokes = 0;
+        let strokesPerHole = [];
+        let isAiming = false;
+        let aimStart = { x: 0, y: 0 };
+        let aimEnd = { x: 0, y: 0 };
+        let particles = [];
+        let gameState = 'welcome'; // 'welcome', 'playing', 'aiming', 'rolling', 'holecomplete', 'gameover'
+
+        // ============================================
+        // Initialisierung
+        // ============================================
+        function init() {
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            
+            // Canvas-Größe setzen
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Event-Listener für Steuerung
+            setupControls();
+            
+            // Button-Events
+            document.getElementById('startBtn').addEventListener('click', startGame);
+            document.getElementById('resetBtn').addEventListener('click', resetBall);
+            document.getElementById('newGameBtn').addEventListener('click', newGame);
+            document.getElementById('nextHoleBtn').addEventListener('click', nextHole);
+            document.getElementById('playAgainBtn').addEventListener('click', newGame);
+            
+            // Spiel-Loop starten
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ============================================
+        // Canvas-Größenanpassung (Responsive)
+        // ============================================
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const rect = container.getBoundingClientRect();
+            
+            // Pixel-Ratio für scharfe Darstellung auf Retina-Displays
+            const dpr = window.devicePixelRatio || 1;
+            
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+            
+            ctx.scale(dpr, dpr);
+            
+            canvasWidth = rect.width;
+            canvasHeight = rect.height;
+            
+            // Ball-Position neu berechnen bei Resize
+            if (gameState === 'playing' || gameState === 'aiming') {
+                const course = COURSES[currentHole];
+                // Position relativ beibehalten
+            }
+        }
+
+        // ============================================
+        // HMI: Steuerung einrichten (Maus & Touch)
+        // ============================================
+        function setupControls() {
+            // Maus-Events
+            canvas.addEventListener('mousedown', handleStart);
+            canvas.addEventListener('mousemove', handleMove);
+            canvas.addEventListener('mouseup', handleEnd);
+            canvas.addEventListener('mouseleave', handleEnd);
+            
+            // Touch-Events für Mobile
+            canvas.addEventListener('touchstart', handleStart, { passive: false });
+            canvas.addEventListener('touchmove', handleMove, { passive: false });
+            canvas.addEventListener('touchend', handleEnd);
+            canvas.addEventListener('touchcancel', handleEnd);
+        }
+
+        // Koordinaten aus Event extrahieren (Maus oder Touch)
+        function getEventPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            let clientX, clientY;
+            
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        // Prüfen ob Punkt auf Ball liegt
+        function isOnBall(pos) {
+            const dx = pos.x - ball.x;
+            const dy = pos.y - ball.y;
+            return Math.sqrt(dx * dx + dy * dy) < BALL_RADIUS * 2.5; // Etwas größerer Trefferbereich für bessere UX
+        }
+
+        // Start der Ziel-Geste
+        function handleStart(e) {
+            e.preventDefault();
+            
+            if (gameState !== 'playing') return;
+            
+            const pos = getEventPos(e);
+            
+            // Nur starten wenn Ball angeklickt und Ball steht
+            if (isOnBall(pos) && Math.abs(ball.vx) < MIN_VELOCITY && Math.abs(ball.vy) < MIN_VELOCITY) {
+                isAiming = true;
+                gameState = 'aiming';
+                aimStart = { x: ball.x, y: ball.y };
+                aimEnd = { x: pos.x, y: pos.y };
+            }
+        }
+
+        // Zielen - Maus/Finger bewegen
+        function handleMove(e) {
+            e.preventDefault();
+            
+            if (!isAiming) return;
+            
+            aimEnd = getEventPos(e);
+        }
+
+        // Schuss ausführen
+        function handleEnd(e) {
+            if (!isAiming) return;
+            
+            isAiming = false;
+            
+            // Richtung und Stärke berechnen
+            const dx = aimStart.x - aimEnd.x;
+            const dy = aimStart.y - aimEnd.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Nur schießen wenn genug gezogen wurde
+            if (distance > 10) {
+                const power = Math.min(distance * POWER_MULTIPLIER, MAX_POWER);
+                const angle = Math.atan2(dy, dx);
+                
+                ball.vx = Math.cos(angle) * power;
+                ball.vy = Math.sin(angle) * power;
+                
+                strokes++;
+                updateUI();
+                gameState = 'rolling';
+            } else {
+                gameState = 'playing';
+            }
+        }
+
+        // ============================================
+        // Spiellogik
+        // ============================================
+        function startGame() {
+            document.getElementById('welcomeOverlay').classList.remove('active');
+            gameState = 'playing';
+            currentHole = 0;
+            strokes = 0;
+            strokesPerHole = [];
+            loadHole(currentHole);
+            updateUI();
+        }
+
+        function loadHole(holeIndex) {
+            const course = COURSES[holeIndex];
+            ball.x = course.ballStart.x * canvasWidth;
+            ball.y = course.ballStart.y * canvasHeight;
+            ball.vx = 0;
+            ball.vy = 0;
+            strokes = 0;
+            particles = [];
+            updateUI();
+        }
+
+        function resetBall() {
+            if (gameState === 'rolling') return; // Nicht während Ball rollt
+            
+            const course = COURSES[currentHole];
+            ball.x = course.ballStart.x * canvasWidth;
+            ball.y = course.ballStart.y * canvasHeight;
+            ball.vx = 0;
+            ball.vy = 0;
+            gameState = 'playing';
+        }
+
+        function nextHole() {
+            document.getElementById('holeCompleteOverlay').classList.remove('active');
+            currentHole++;
+            
+            if (currentHole >= COURSES.length) {
+                showGameEnd();
+            } else {
+                loadHole(currentHole);
+                gameState = 'playing';
+            }
+        }
+
+        function newGame() {
+            // Alle Overlays schließen
+            document.getElementById('welcomeOverlay').classList.remove('active');
+            document.getElementById('holeCompleteOverlay').classList.remove('active');
+            document.getElementById('gameEndOverlay').classList.remove('active');
+            
+            // Button-Text zurücksetzen für nächstes Spiel
+            document.getElementById('nextHoleBtn').innerHTML = '<span aria-hidden="true">→</span> Nächste Bahn';
+            
+            // Spielzustand zurücksetzen
+            currentHole = 0;
+            strokes = 0;
+            strokesPerHole = [];
+            particles = [];
+            isAiming = false;
+            
+            // Sicherstellen, dass Canvas-Dimensionen korrekt sind
+            if (canvasWidth === 0 || canvasHeight === 0) {
+                resizeCanvas();
+            }
+            
+            loadHole(0);
+            gameState = 'playing';
+            updateUI();
+        }
+
+        function showHoleComplete() {
+            const course = COURSES[currentHole];
+            const par = course.par;
+            const diff = strokes - par;
+            
+            strokesPerHole.push(strokes);
+            
+            // Text aktualisieren
+            document.getElementById('holeCompleteText').textContent = 
+                `Du hast Bahn ${currentHole + 1} in ${strokes} ${strokes === 1 ? 'Schlag' : 'Schlägen'} geschafft!`;
+            
+            // Par-Anzeige
+            const parDisplay = document.getElementById('parDisplay');
+            let parText = '';
+            let parClass = '';
+            
+            if (diff < 0) {
+                parText = diff === -1 ? 'Birdie! 🐦' : `${Math.abs(diff)} unter Par! 🔥`;
+                parClass = 'par-under';
+            } else if (diff === 0) {
+                parText = 'Par! ✓';
+                parClass = 'par-even';
+            } else {
+                parText = `${diff} über Par`;
+                parClass = 'par-over';
+            }
+            
+            parDisplay.innerHTML = `<span class="par-display ${parClass}">${parText}</span>`;
+            
+            // Button-Text anpassen
+            const nextBtn = document.getElementById('nextHoleBtn');
+            if (currentHole >= COURSES.length - 1) {
+                nextBtn.innerHTML = '<span aria-hidden="true">🏆</span> Ergebnis ansehen';
+            } else {
+                nextBtn.innerHTML = '<span aria-hidden="true">→</span> Nächste Bahn';
+            }
+            
+            document.getElementById('holeCompleteOverlay').classList.add('active');
+            gameState = 'holecomplete';
+        }
+
+        function showGameEnd() {
+            const totalStrokes = strokesPerHole.reduce((a, b) => a + b, 0);
+            const totalPar = COURSES.reduce((a, c) => a + c.par, 0);
+            
+            // Score-Tabelle aufbauen
+            let tableHTML = '';
+            COURSES.forEach((course, i) => {
+                tableHTML += `
+                    <div class="score-row">
+                        <span class="score-label">Bahn ${i + 1} (Par ${course.par})</span>
+                        <span class="score-value">${strokesPerHole[i]} Schläge</span>
+                    </div>
+                `;
+            });
+            tableHTML += `
+                <div class="score-row">
+                    <span class="score-label">Gesamt (Par ${totalPar})</span>
+                    <span class="score-value">${totalStrokes} Schläge</span>
+                </div>
+            `;
+            
+            document.getElementById('scoreTable').innerHTML = tableHTML;
+            document.getElementById('gameEndOverlay').classList.add('active');
+            gameState = 'gameover';
+        }
+
+        // ============================================
+        // Physik-Simulation
+        // ============================================
+        function updatePhysics() {
+            if (gameState !== 'rolling') return;
+            
+            const course = COURSES[currentHole];
+            
+            // Geschwindigkeit anwenden
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+            
+            // Reibung
+            ball.vx *= FRICTION;
+            ball.vy *= FRICTION;
+            
+            // Wandkollisionen
+            course.walls.forEach(wall => {
+                checkWallCollision(wall);
+            });
+            
+            // Hindernis-Kollisionen
+            course.obstacles.forEach(obs => {
+                checkObstacleCollision(obs);
+            });
+            
+            // Prüfen ob Ball eingelocht
+            const holeX = course.hole.x * canvasWidth;
+            const holeY = course.hole.y * canvasHeight;
+            const distToHole = Math.sqrt(
+                Math.pow(ball.x - holeX, 2) + 
+                Math.pow(ball.y - holeY, 2)
+            );
+            const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+            
+            if (distToHole < HOLE_RADIUS && speed < HOLE_CAPTURE_SPEED) {
+                // Eingelocht!
+                ball.x = holeX;
+                ball.y = holeY;
+                ball.vx = 0;
+                ball.vy = 0;
+                
+                // Partikeleffekt
+                createCelebrationParticles(holeX, holeY);
+                
+                setTimeout(showHoleComplete, 800);
+                gameState = 'holecomplete';
+                return;
+            }
+            
+            // Ball stoppt wenn langsam genug
+            if (Math.abs(ball.vx) < MIN_VELOCITY && Math.abs(ball.vy) < MIN_VELOCITY) {
+                ball.vx = 0;
+                ball.vy = 0;
+                gameState = 'playing';
+            }
+        }
+
+        // Kollision mit Wand
+        function checkWallCollision(wall) {
+            const x1 = wall.x1 * canvasWidth;
+            const y1 = wall.y1 * canvasHeight;
+            const x2 = wall.x2 * canvasWidth;
+            const y2 = wall.y2 * canvasHeight;
+            
+            // Abstand Punkt zu Linie
+            const A = ball.x - x1;
+            const B = ball.y - y1;
+            const C = x2 - x1;
+            const D = y2 - y1;
+            
+            const dot = A * C + B * D;
+            const lenSq = C * C + D * D;
+            let param = -1;
+            
+            if (lenSq !== 0) param = dot / lenSq;
+            
+            let xx, yy;
+            
+            if (param < 0) {
+                xx = x1;
+                yy = y1;
+            } else if (param > 1) {
+                xx = x2;
+                yy = y2;
+            } else {
+                xx = x1 + param * C;
+                yy = y1 + param * D;
+            }
+            
+            const dx = ball.x - xx;
+            const dy = ball.y - yy;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < BALL_RADIUS) {
+                // Reflektion berechnen
+                const nx = dx / distance;
+                const ny = dy / distance;
+                
+                const dotProduct = ball.vx * nx + ball.vy * ny;
+                
+                ball.vx -= 2 * dotProduct * nx;
+                ball.vy -= 2 * dotProduct * ny;
+                
+                // Ball aus Wand schieben
+                ball.x = xx + nx * BALL_RADIUS;
+                ball.y = yy + ny * BALL_RADIUS;
+                
+                // Etwas Energie verlieren
+                ball.vx *= 0.85;
+                ball.vy *= 0.85;
+            }
+        }
+
+        // Kollision mit rechteckigem Hindernis
+        function checkObstacleCollision(obs) {
+            const ox = obs.x * canvasWidth;
+            const oy = obs.y * canvasHeight;
+            const ow = obs.w * canvasWidth;
+            const oh = obs.h * canvasHeight;
+            
+            // Nächsten Punkt auf Rechteck finden
+            const closestX = Math.max(ox, Math.min(ball.x, ox + ow));
+            const closestY = Math.max(oy, Math.min(ball.y, oy + oh));
+            
+            const dx = ball.x - closestX;
+            const dy = ball.y - closestY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < BALL_RADIUS) {
+                if (distance === 0) {
+                    // Ball ist im Hindernis - rausdrücken
+                    ball.x = closestX + BALL_RADIUS;
+                    ball.y = closestY + BALL_RADIUS;
+                    return;
+                }
+                
+                const nx = dx / distance;
+                const ny = dy / distance;
+                
+                const dotProduct = ball.vx * nx + ball.vy * ny;
+                
+                ball.vx -= 2 * dotProduct * nx;
+                ball.vy -= 2 * dotProduct * ny;
+                
+                ball.x = closestX + nx * BALL_RADIUS;
+                ball.y = closestY + ny * BALL_RADIUS;
+                
+                ball.vx *= 0.8;
+                ball.vy *= 0.8;
+            }
+        }
+
+        // ============================================
+        // Partikel-System für Effekte
+        // ============================================
+        function createCelebrationParticles(x, y) {
+            const colors = ['#fcd34d', '#f97316', '#ef4444', '#22c55e', '#3b82f6', '#8b5cf6'];
+            
+            for (let i = 0; i < 30; i++) {
+                const angle = (Math.PI * 2 / 30) * i;
+                const speed = 3 + Math.random() * 5;
+                
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    life: 1,
+                    decay: 0.02 + Math.random() * 0.02,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    size: 4 + Math.random() * 4
+                });
+            }
+        }
+
+        function updateParticles() {
+            particles = particles.filter(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.15; // Gravitation
+                p.life -= p.decay;
+                return p.life > 0;
+            });
+        }
+
+        // ============================================
+        // Rendering
+        // ============================================
+        function render() {
+            // Sicherheitsprüfung: Abbrechen wenn Canvas nicht bereit
+            if (!ctx || canvasWidth === 0 || canvasHeight === 0) {
+                return;
+            }
+            
+            // Sicherheitsprüfung: currentHole im gültigen Bereich
+            if (currentHole < 0 || currentHole >= COURSES.length) {
+                currentHole = 0;
+            }
+            
+            const course = COURSES[currentHole];
+            
+            // Hintergrund
+            ctx.fillStyle = course.bgColor;
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+            
+            // Spielfeld-Bereich (Gras)
+            drawPlayArea(course);
+            
+            // Dekorationen
+            drawDecorations(course);
+            
+            // Wände
+            drawWalls(course);
+            
+            // Hindernisse
+            drawObstacles(course);
+            
+            // Loch
+            drawHole(course);
+            
+            // Ziellinie (beim Aiming)
+            if (isAiming) {
+                drawAimLine();
+            }
+            
+            // Ball
+            drawBall();
+            
+            // Partikel
+            drawParticles();
+        }
+
+        function drawPlayArea(course) {
+            ctx.fillStyle = '#4ade80';
+            ctx.strokeStyle = '#16a34a';
+            ctx.lineWidth = 4;
+            
+            // Für Bahn 2 (L-Form) zeichnen wir zwei überlappende Rechtecke
+            // Für andere Bahnen ein einfaches Rechteck basierend auf den Wänden
+            
+            if (currentHole === 1) {
+                // L-förmige Bahn: Vertikaler Teil + Horizontaler Teil
+                ctx.beginPath();
+                
+                // Vertikaler Teil (unten links)
+                const v_x = 0.15 * canvasWidth;
+                const v_y = 0.45 * canvasHeight;
+                const v_w = 0.20 * canvasWidth;
+                const v_h = 0.45 * canvasHeight;
+                
+                // Horizontaler Teil (oben)
+                const h_x = 0.15 * canvasWidth;
+                const h_y = 0.10 * canvasHeight;
+                const h_w = 0.70 * canvasWidth;
+                const h_h = 0.35 * canvasHeight;
+                
+                // Zeichne zusammenhängende L-Form als Pfad
+                ctx.beginPath();
+                ctx.moveTo(v_x, h_y);                           // Oben links
+                ctx.lineTo(h_x + h_w, h_y);                     // Oben rechts
+                ctx.lineTo(h_x + h_w, h_y + h_h);               // Rechts unten am horizontalen Teil
+                ctx.lineTo(v_x + v_w, h_y + h_h);               // Ecke innen
+                ctx.lineTo(v_x + v_w, v_y + v_h);               // Unten rechts am vertikalen Teil
+                ctx.lineTo(v_x, v_y + v_h);                     // Unten links
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                
+                // Gras-Textur
+                ctx.save();
+                ctx.clip();
+                ctx.strokeStyle = 'rgba(34, 197, 94, 0.3)';
+                ctx.lineWidth = 1;
+                for (let y = h_y; y < v_y + v_h; y += 15) {
+                    ctx.beginPath();
+                    ctx.moveTo(v_x, y);
+                    ctx.lineTo(h_x + h_w, y);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            } else {
+                // Standard-Rechteck für Bahn 1 und 3
+                const minX = Math.min(...course.walls.map(w => Math.min(w.x1, w.x2))) * canvasWidth;
+                const maxX = Math.max(...course.walls.map(w => Math.max(w.x1, w.x2))) * canvasWidth;
+                const minY = Math.min(...course.walls.map(w => Math.min(w.y1, w.y2))) * canvasHeight;
+                const maxY = Math.max(...course.walls.map(w => Math.max(w.y1, w.y2))) * canvasHeight;
+                
+                ctx.beginPath();
+                ctx.roundRect(minX - 2, minY - 2, maxX - minX + 4, maxY - minY + 4, 10);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Gras-Textur (subtile Linien)
+                ctx.strokeStyle = 'rgba(34, 197, 94, 0.3)';
+                ctx.lineWidth = 1;
+                for (let y = minY; y < maxY; y += 15) {
+                    ctx.beginPath();
+                    ctx.moveTo(minX, y);
+                    ctx.lineTo(maxX, y);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        function drawWalls(course) {
+            ctx.strokeStyle = '#78716c';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            
+            course.walls.forEach(wall => {
+                ctx.beginPath();
+                ctx.moveTo(wall.x1 * canvasWidth, wall.y1 * canvasHeight);
+                ctx.lineTo(wall.x2 * canvasWidth, wall.y2 * canvasHeight);
+                ctx.stroke();
+            });
+            
+            // Highlight oben
+            ctx.strokeStyle = '#a8a29e';
+            ctx.lineWidth = 3;
+            
+            course.walls.forEach(wall => {
+                ctx.beginPath();
+                ctx.moveTo(wall.x1 * canvasWidth, wall.y1 * canvasHeight - 2);
+                ctx.lineTo(wall.x2 * canvasWidth, wall.y2 * canvasHeight - 2);
+                ctx.stroke();
+            });
+        }
+
+        function drawObstacles(course) {
+            course.obstacles.forEach(obs => {
+                const x = obs.x * canvasWidth;
+                const y = obs.y * canvasHeight;
+                const w = obs.w * canvasWidth;
+                const h = obs.h * canvasHeight;
+                
+                // Schatten
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.beginPath();
+                ctx.roundRect(x + 3, y + 3, w, h, 4);
+                ctx.fill();
+                
+                // Block
+                ctx.fillStyle = '#78716c';
+                ctx.beginPath();
+                ctx.roundRect(x, y, w, h, 4);
+                ctx.fill();
+                
+                // Highlight
+                ctx.fillStyle = '#a8a29e';
+                ctx.beginPath();
+                ctx.roundRect(x, y, w, h * 0.3, [4, 4, 0, 0]);
+                ctx.fill();
+            });
+        }
+
+        function drawHole(course) {
+            const x = course.hole.x * canvasWidth;
+            const y = course.hole.y * canvasHeight;
+            
+            // Äußerer Ring (Schatten)
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.beginPath();
+            ctx.arc(x, y, HOLE_RADIUS + 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Loch
+            ctx.fillStyle = '#1f2937';
+            ctx.beginPath();
+            ctx.arc(x, y, HOLE_RADIUS, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Innerer dunkler Bereich
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(x, y, HOLE_RADIUS - 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Flagge
+            const flagHeight = 50;
+            const flagWidth = 25;
+            
+            // Fahnenstange
+            ctx.strokeStyle = '#78716c';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x, y - flagHeight);
+            ctx.stroke();
+            
+            // Fahne
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.moveTo(x, y - flagHeight);
+            ctx.lineTo(x + flagWidth, y - flagHeight + 10);
+            ctx.lineTo(x, y - flagHeight + 20);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawDecorations(course) {
+            course.decorations.forEach(deco => {
+                const x = deco.x * canvasWidth;
+                const y = deco.y * canvasHeight;
+                
+                if (deco.type === 'tree') {
+                    // Baumstamm
+                    ctx.fillStyle = '#92400e';
+                    ctx.fillRect(x - 4, y, 8, 20);
+                    
+                    // Baumkrone
+                    ctx.fillStyle = '#22c55e';
+                    ctx.beginPath();
+                    ctx.arc(x, y - 5, 18, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#16a34a';
+                    ctx.beginPath();
+                    ctx.arc(x - 8, y, 12, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.beginPath();
+                    ctx.arc(x + 8, y, 12, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                if (deco.type === 'flower') {
+                    const colors = ['#f472b6', '#fb923c', '#facc15'];
+                    ctx.fillStyle = colors[Math.floor(x + y) % 3];
+                    
+                    for (let i = 0; i < 5; i++) {
+                        const angle = (Math.PI * 2 / 5) * i;
+                        ctx.beginPath();
+                        ctx.arc(
+                            x + Math.cos(angle) * 6,
+                            y + Math.sin(angle) * 6,
+                            5, 0, Math.PI * 2
+                        );
+                        ctx.fill();
+                    }
+                    
+                    ctx.fillStyle = '#fcd34d';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                if (deco.type === 'rock') {
+                    ctx.fillStyle = '#78716c';
+                    ctx.beginPath();
+                    ctx.ellipse(x, y, 15, 10, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#a8a29e';
+                    ctx.beginPath();
+                    ctx.ellipse(x - 3, y - 3, 8, 5, -0.3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+        }
+
+        function drawBall() {
+            // Schatten
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.beginPath();
+            ctx.ellipse(ball.x + 3, ball.y + 3, BALL_RADIUS, BALL_RADIUS * 0.6, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Ball (Gradient für 3D-Effekt)
+            const gradient = ctx.createRadialGradient(
+                ball.x - 4, ball.y - 4, 0,
+                ball.x, ball.y, BALL_RADIUS
+            );
+            gradient.addColorStop(0, '#ffffff');
+            gradient.addColorStop(0.5, '#f8fafc');
+            gradient.addColorStop(1, '#e2e8f0');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, BALL_RADIUS, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Highlight
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.beginPath();
+            ctx.arc(ball.x - 4, ball.y - 4, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Hover-Effekt wenn spielbereit
+            if (gameState === 'playing') {
+                ctx.strokeStyle = 'rgba(249, 115, 22, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, BALL_RADIUS + 4 + Math.sin(Date.now() / 200) * 2, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        }
+
+        // HMI: Ziellinie beim Aiming zeichnen
+        function drawAimLine() {
+            const dx = aimStart.x - aimEnd.x;
+            const dy = aimStart.y - aimEnd.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const power = Math.min(distance * POWER_MULTIPLIER, MAX_POWER);
+            const powerRatio = power / MAX_POWER;
+            
+            // Richtungsvektor normalisieren
+            const nx = dx / distance || 0;
+            const ny = dy / distance || 0;
+            
+            // Linienlänge proportional zur Kraft
+            const lineLength = Math.min(distance, 150);
+            const endX = ball.x + nx * lineLength;
+            const endY = ball.y + ny * lineLength;
+            
+            // Gestrichelte Linie
+            ctx.strokeStyle = `rgba(255, 255, 255, ${0.5 + powerRatio * 0.3})`;
+            ctx.lineWidth = 3;
+            ctx.setLineDash([8, 6]);
+            
+            ctx.beginPath();
+            ctx.moveTo(ball.x, ball.y);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+            
+            ctx.setLineDash([]);
+            
+            // Pfeilspitze
+            const arrowSize = 12;
+            const arrowAngle = Math.atan2(ny, nx);
+            
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.7 + powerRatio * 0.3})`;
+            ctx.beginPath();
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(
+                endX - arrowSize * Math.cos(arrowAngle - 0.4),
+                endY - arrowSize * Math.sin(arrowAngle - 0.4)
+            );
+            ctx.lineTo(
+                endX - arrowSize * Math.cos(arrowAngle + 0.4),
+                endY - arrowSize * Math.sin(arrowAngle + 0.4)
+            );
+            ctx.closePath();
+            ctx.fill();
+            
+            // Kraftanzeige
+            const barWidth = 60;
+            const barHeight = 8;
+            const barX = ball.x - barWidth / 2;
+            const barY = ball.y + BALL_RADIUS + 20;
+            
+            // Hintergrund
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.beginPath();
+            ctx.roundRect(barX, barY, barWidth, barHeight, 4);
+            ctx.fill();
+            
+            // Füllstand mit Farbverlauf je nach Stärke
+            const powerColor = powerRatio < 0.5 
+                ? `rgb(34, 197, 94)` 
+                : powerRatio < 0.8 
+                    ? `rgb(251, 191, 36)` 
+                    : `rgb(239, 68, 68)`;
+            
+            ctx.fillStyle = powerColor;
+            ctx.beginPath();
+            ctx.roundRect(barX, barY, barWidth * powerRatio, barHeight, 4);
+            ctx.fill();
+        }
+
+        function drawParticles() {
+            particles.forEach(p => {
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+        }
+
+        // ============================================
+        // UI aktualisieren
+        // ============================================
+        function updateUI() {
+            document.getElementById('holeNumber').textContent = `${currentHole + 1}/${COURSES.length}`;
+            document.getElementById('strokeCount').textContent = strokes;
+        }
+
+        // ============================================
+        // Haupt-Spielschleife
+        // ============================================
+        function gameLoop() {
+            try {
+                updatePhysics();
+                updateParticles();
+                render();
+            } catch (error) {
+                console.error('Fehler in gameLoop:', error);
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Spiel starten wenn DOM geladen
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
